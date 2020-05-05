@@ -130,6 +130,16 @@ planning_permission_granted$month_year <- gsub("-","M",planning_permission_grant
 planning_permission_granted$month_year
 
 
+#use macth function to look up the cpi data using month and year columns
+cpi_check <-cpi2$`Consumer Price Index (Base Dec 2016=100)`[match(planning_permission_granted$month_year, cpi2$`Year and Month number`)]
+
+#add new column to planning permission data set
+planning_permission_granted$CPI_2016 <- cpi_check
+
+
+#using cpi data woth 2016 base predict whether it is above or below the 2016 base
+
+
 cpi2$`Year and Month number`
 
 str(cpi)
