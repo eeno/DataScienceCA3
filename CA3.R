@@ -148,28 +148,6 @@ cpi_check <-cpi2$`Consumer Price Index (Base Dec 2016=100)`[match(planning_permi
 planning_permission_granted$CPI_2016 <- cpi_check
 
 
-cpi_check2 <- cpi2$`Consumer Price Index (Base Dec 2011=100)`
-
-
-poi_value <-poi2$`Value of Production Index in Building and Construction (Base 2015=100) (All building and construction)`[
-                                                                                          match(planning_permission_granted$year,
-                                                                                                poi2$Year)] 
-
-
-planning_permission_granted$POI_Value <- poi_value
-
-
-
-poi_volume <- poi2$`Volume of Production Index in Building and Construction (Base 2015=100) (All building and construction)`[
-                                                                                              match(planning_permission_granted$year,
-                                                                                                    poi2$Year)
-]
-
-planning_permission_granted$POI_Volume <- poi_volume
-
-
-#using cpi data woth 2016 base predict whether it is above or below the 2016 base
-
 
 cpi2$`Year and Month number`
  #merge cpi data
