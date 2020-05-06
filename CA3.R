@@ -12,16 +12,27 @@ colnames(cpi2) <- as.character(unlist(cpi2[1,]))
 #use first row as headers
 cpi2 <- cpi2[-1,]
 
+
+                                                   
+
+
 #when transposing R took the first column and pplaced it at index 0
 #need to add this to the datafre, using cbind
 #Row.Names is the new name for the column that will be joined to the datframe
 #rownames() returns all the values f index 0
 cpi2 <- cbind(Row.Names = rownames(cpi2), cpi2)
 #rname theis new column
-names(cpi2)[1] <- "Year and Month number"
+names(cpi2)[1] <- "year_month"
 
 #remove the X from the start of the rownames
-cpi2$`Year and Month number` <- substring(cpi2$`Year and Month number`, 2)
+cpi2$year_month <- substring(cpi2$year_month, 2)
+
+#remove data pre 2000 
+cpi2 <- cpi2[grepl("20" ,cpi2$year_month),]
+
+#remove 2020 data
+cpi2 <- cpi2[!grepl("2020" ,cpi2$year_month),]
+
 
 #production output index
 poi <- read.csv("POI_construction_all.csv")
@@ -89,7 +100,7 @@ new_date <- as.Date(date_field, "%Y-%d-%m")
 planning_permission_granted$DecisionDate <- new_date
 
 #create a year column based on decisiondate
-planning_permission_granted$year <- format(planning_permission_granted$DecisionDate, "%Y")
+planning_permission_granted$Year <- format(planning_permission_granted$DecisionDate, "%Y")
 
 #create a table of year values to plot
 planning_year_freq <- table(planning_permission_granted$year)
@@ -123,11 +134,11 @@ sum(is.na(planning_permission_granted$DecisionDate))
   
 
 #create a cloumn based on year and month from DecionDate colukmn to match with data in POI2 CPI2 
-planning_permission_granted$month_year <- format(planning_permission_granted$DecisionDate, "%Y-%m")
+planning_permission_granted$year_month <- format(planning_permission_granted$DecisionDate, "%Y-%m")
 
 #Replace - with M to match the "month and year" column in POI2 and CPI2
-planning_permission_granted$month_year <- gsub("-","M",planning_permission_granted$month_year)
-planning_permission_granted$month_year
+planning_permission_granted$year_month <- gsub("-","M",planning_permission_granted$year_month)
+planning_permission_granted$year_month
 
 
 #use macth function to look up the cpi data using month and year columns
@@ -137,10 +148,35 @@ cpi_check <-cpi2$`Consumer Price Index (Base Dec 2016=100)`[match(planning_permi
 planning_permission_granted$CPI_2016 <- cpi_check
 
 
+cpi_check2 <- cpi2$`Consumer Price Index (Base Dec 2011=100)`
+
+
+poi_value <-poi2$`Value of Production Index in Building and Construction (Base 2015=100) (All building and construction)`[
+                                                                                          match(planning_permission_granted$year,
+                                                                                                poi2$Year)] 
+
+
+planning_permission_granted$POI_Value <- poi_value
+
+
+
+poi_volume <- poi2$`Volume of Production Index in Building and Construction (Base 2015=100) (All building and construction)`[
+                                                                                              match(planning_permission_granted$year,
+                                                                                                    poi2$Year)
+]
+
+planning_permission_granted$POI_Volume <- poi_volume
+
+
 #using cpi data woth 2016 base predict whether it is above or below the 2016 base
 
 
 cpi2$`Year and Month number`
+ #merge cpi data
+planning_permission_granted <- merge(planning_permission_granted,cpi2, by = "year_month", all =  TRUE)  
+
+#merge poi data
+planning_permission_granted <- merge(planning_permission_granted,poi2, by = "Year", all =  TRUE) 
 
 str(cpi)
 str(poi)
