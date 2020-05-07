@@ -76,12 +76,12 @@ unique(planning_permission_granted$Decision)
 
 
 #check the plannig authorities
-authority_freq <- table(planning_permission$PlanningAuthority)
+authority_count <- table(planning_permission$PlanningAuthority)
 
 #create a frequncy table
-authority_freq <- as.data.frame(authority_freq)
+authority_count <- as.data.frame(authority_freq)
 
-
+authority_freq
 
 # create a datset based on deciosn and appeal decision. Sometimes permision was granted but then refused
 #due to an appeal
@@ -103,7 +103,7 @@ planning_permission_granted$DecisionDate <- new_date
 planning_permission_granted$Year <- format(planning_permission_granted$DecisionDate, "%Y")
 
 #create a table of year values to plot
-planning_year_freq <- table(planning_permission_granted$year)
+planning_year_freq <- table(planning_permission_granted$Year)
 
 #plot frequncy of years
 barplot(  planning_year_freq ,  
@@ -113,12 +113,12 @@ barplot(  planning_year_freq ,
        col = "blue")
 
 #Pre 1999 has very litle data as does 2020. include data form 2000 - 2019
-planning_permission_granted <- planning_permission_granted[which(planning_permission_granted$year > 1999 
-                                                          & planning_permission_granted$year < 2020) , ]
+planning_permission_granted <- planning_permission_granted[which(planning_permission_granted$Year > 1999 
+                                                          & planning_permission_granted$Year < 2020) , ]
 
 
 #creat a table fo datae with deciosn date between 2000 and 2019
-planning_year_freq <- table(planning_permission_granted$year)
+planning_year_freq <- table(planning_permission_granted$Year)
 
 #plot the table fof data from 2000 - 2019
 barplot(  planning_year_freq ,  
@@ -142,19 +142,43 @@ planning_permission_granted$year_month
 
 
 #use macth function to look up the cpi data using month and year columns
-cpi_check <-cpi2$`Consumer Price Index (Base Dec 2016=100)`[match(planning_permission_granted$month_year, cpi2$`Year and Month number`)]
+#cpi_check <-cpi2$`Consumer Price Index (Base Dec 2016=100)`[match(planning_permission_granted$month_year, cpi2$`Year and Month number`)]
 
 #add new column to planning permission data set
-planning_permission_granted$CPI_2016 <- cpi_check
+#planning_permission_granted$CPI_2016 <- cpi_check
 
 
 
-cpi2$`Year and Month number`
+#cpi2$`Year and Month number`
  #merge cpi data
 planning_permission_granted <- merge(planning_permission_granted,cpi2, by = "year_month", all =  TRUE)  
 
 #merge poi data
 planning_permission_granted <- merge(planning_permission_granted,poi2, by = "Year", all =  TRUE) 
+
+#check missing value
+library(mice)
+md.pattern(planning_permission_granted)
+
+library(VIM)
+missing_values <- aggr(planning_permission_granted, prop = FALSE, numbers = TRUE)
+summary(missing_values)
+
+plan_auth_prop <- prop.table(table(planning_permission_granted$PlanningAuthority))
+
+
+
+barplot(height = plan_auth_prop,
+        main = "Planning application by authority", 
+        ylab = "Frequency", 
+        xlab = "Authority",
+        col = "white")
+
+#create a varaible where plannig permission was granted 
+#create varaible where CPI is above 100 and below 100
+#check proption of PP granted vs non granted
+#delete columns
+
 
 str(cpi)
 str(poi)
