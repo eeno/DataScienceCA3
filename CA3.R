@@ -68,11 +68,70 @@ str(planning_permission)
 
 # Cleaning Data------------------------------------------------------------------------------------------
 
+#some blank column values contain no values but have whitespace characters
+#use regex to replce the whitespace with "" using a custom function
+trim <- function (x) gsub("^\\s+|\\s+$", "", x)
+planning_permission[] <- lapply(planning_permission, trim)
+
+
 #replace missing values with NA's
 planning_permission[planning_permission == ""] <- NA
 
+
+
+
+planning_permission 
+
+#check missing value
+library(mice)
+md.pattern(planning_permission)
+
+library(VIM)
+missing_values <- aggr(planning_permission_clean, prop = FALSE, numbers = TRUE)
+summary(missing_values)
+
+
+na_count <-sapply(planning_permission, function(y) sum(length(which(is.na(y)))))
+#convert to dataframe for easy interpratation
+na_count <- data.frame(na_count)
+#create a new column with percentages of na 
+na_count$proportion <- round((na_count$na_count / nrow(planning_permission) *100),digits = 2)
+
+na_count <- cbind(Row.Names = rownames(na_count), na_count)
+names(na_count)[1] <- "Column_names"
+
+na_count <- na_count[order(-na_count$proportion),]
+
+plot(  na_count$Column_names,na_count$proportion,
+          type = "h",
+          main = "Percentage of NA's per column", 
+          ylab = "Percent of NA's", 
+          xlab = "Columns",
+          col = "blue")
+
+
+
+
 #check unique values in planning permission
 unique(planning_permission_granted$Decision)
+
+#over half the postcodes are missing
+sum(is.na(planning_permission$DevelopmentPostcode))
+
+
+
+
+
+#drop any column that has all na vlaues
+planning_permission_clean <- planning_permission[,which(unlist(lapply(planning_permission, function(x) !all(is.na(x)))))]
+
+
+
+cols_to_drop <- c("ApplicationNumber","ETL_DATE", "SiteId", "DevelopmentAddress","DevelopmentDescription","DevelopmentPostcode",
+                  "AppealRefNumber","ApplicationNumber", "LandUseCode")
+
+planning_permission_clean <- planning_permission_clean[, !names(planning_permission_clean) %in% cols_to_drop]
+
 
 
 #check the plannig authorities
@@ -85,8 +144,18 @@ authority_freq
 
 # create a datset based on deciosn and appeal decision. Sometimes permision was granted but then refused
 #due to an appeal
-planning_permission_granted <- planning_permission[grepl("GRANT PERMISSION",planning_permission$Decision) 
-                                                   & !grepl("Refuse Permission",planning_permission$AppealDecision) ,]
+planning_permission$granted <- ifelse(grepl("GRANT PERMISSION",planning_permission$Decision) 
+                                      & !grepl("Refuse Permission",planning_permission$AppealDecision),1,0)
+
+
+
+
+
+
+
+
+
+sum(planning_permission$granted)
 
 #count rows in dataframe
 nrow(planning_permission_granted)
@@ -106,7 +175,7 @@ planning_permission_granted$Year <- format(planning_permission_granted$DecisionD
 planning_year_freq <- table(planning_permission_granted$Year)
 
 #plot frequncy of years
-barplot(  planning_year_freq ,  
+plot(  planning_year_freq ,  
         main = "Frequency of Granted planning permission by year", 
        ylab = "Frequency", 
        xlab = "Year",
@@ -117,15 +186,8 @@ planning_permission_granted <- planning_permission_granted[which(planning_permis
                                                           & planning_permission_granted$Year < 2020) , ]
 
 
-#creat a table fo datae with deciosn date between 2000 and 2019
-planning_year_freq <- table(planning_permission_granted$Year)
-
-#plot the table fof data from 2000 - 2019
-barplot(  planning_year_freq ,  
-          main = "Frequency of Granted planning permission by year", 
-          ylab = "Frequency", 
-          xlab = "Year",
-          col = "blue")
+library(mice)
+md.pattern(planning_permission)
 
 
 
@@ -156,12 +218,25 @@ planning_permission_granted <- merge(planning_permission_granted,cpi2, by = "yea
 #merge poi data
 planning_permission_granted <- merge(planning_permission_granted,poi2, by = "Year", all =  TRUE) 
 
+
+
+
+#creat a table fo datae with deciosn date between 2000 and 2019
+planning_year_freq <- table(planning_permission_granted$Year)
+
+#plot the table fof data from 2000 - 2019
+barplot(  planning_year_freq ,  
+          main = "Frequency of Granted planning permission by year", 
+          ylab = "Frequency", 
+          xlab = "Year",
+          col = "blue")
+
 #check missing value
 library(mice)
 md.pattern(planning_permission_granted)
 
 library(VIM)
-missing_values <- aggr(planning_permission_granted, prop = FALSE, numbers = TRUE)
+missing_values <- aggr(planning_permission, prop = FALSE, numbers = TRUE)
 summary(missing_values)
 
 plan_auth_prop <- prop.table(table(planning_permission_granted$PlanningAuthority))
