@@ -19,7 +19,7 @@ cpi2 <- cpi2[-1,]
 #when transposing R took the first column and pplaced it at index 0
 #need to add this to the datafre, using cbind
 #Row.Names is the new name for the column that will be joined to the datframe
-#rownames() returns all the values f index 0
+#rownames() returns all the values at index 0
 cpi2 <- cbind(Row.Names = rownames(cpi2), cpi2)
 #rname theis new column
 names(cpi2)[1] <- "year_month"
@@ -58,15 +58,29 @@ names(poi2)[1] <- "Year"
 #remove the X from the start of the rownames
 poi2$Year <- substring(poi2$Year, 2)
 
+poi2$Year <- NULL
+
+
+
+cpi_year <- read.csv("CPI by Year2.csv")
+
 
 #planning permission data
-
+rm(planning_permission)
 planning_permission <- read.csv("Planning_Application_Sites_2010_onwards.csv")
 
 #check structure of planning permision
 str(planning_permission)
 
 # Cleaning Data------------------------------------------------------------------------------------------
+
+na_count <-sapply(planning_permission, function(y) sum(length(which(is.na(y)))))
+#convert to dataframe for easy interpratation
+na_count <- data.frame(na_count)
+#create a new column with percentages of na 
+
+
+
 
 #some blank column values contain no values but have whitespace characters
 #use regex to replce the whitespace with "" using a custom function
@@ -99,8 +113,96 @@ na_count$proportion <- round((na_count$na_count / nrow(planning_permission) *100
 
 na_count <- cbind(Row.Names = rownames(na_count), na_count)
 names(na_count)[1] <- "Column_names"
+na_count
 
 na_count <- na_count[order(-na_count$proportion),]
+
+
+granted_plan <- planning_permission[grepl("GRANT PERMISSION",planning_permission$Decision)
+& planning_permission[is.na(planning_permission$AppealDecision),],]
+
+
+granted_plan <- planning_permission[grepl("GRANT PERMISSION",planning_permission$Decision),]
+
+granted_plan <- granted_plan[is.na(granted_plan$AppealDecision),]
+
+granted_plan <- planning_permission[grepl("GRANT PERMISSION",planning_permission$Decision),]
+
+granted_plan_na <- granted_plan[,is.na(granted_plan$DecisionDate)]
+
+granted_plan_test <- granted_plan[,c("ApplicationNumber","Decision","AppealDecision")]
+
+
+planning_permission$granted <- ifelse(grepl("GRANT PERMISSION",planning_permission$Decision) 
+                                      & is.na(planning_permission$AppealDecision),1,0)
+
+
+
+
+
+date_field <- as.character(planning_permission$DecisionDate)
+
+#formatng date
+new_date <- as.Date(date_field, "%Y-%d-%m")
+#converting column in dataframe to date
+planning_permission$DecisionDate <- new_date
+
+planning_permission$Year <- format(planning_permission$DecisionDate, "%Y")
+
+
+#create a table of year values to plot
+planning_year_freq <- table(planning_permission$Year)
+
+#plot frequncy of years
+plot(  planning_year_freq ,  
+       main = "Frequency of Granted planning permission by year", 
+       ylab = "Frequency", 
+       xlab = "Year",
+       col = "blue")
+
+
+
+
+summary(planning_permission$DecisionDate)
+
+granted_plan_test <- granted_plan_test[order(-granted_plan_test$ApplicationNumber),]
+
+granted_plan <- granted_plan[!grepl("REFUSE", granted_plan$Decision),]
+
+
+
+
+unique(granted_plan$Decision)
+
+nrow(grante)
+
+unique(granted_plan_test$AppealDecision)
+
+unique(planning_permission$Decision)
+unique(planning_permission$AppealDecision)
+
+
+
+
+test <- data.frame(table(planning_permission$ApplicationNumber))
+
+test <- test[order(-test$Freq),]
+
+test
+
+
+
+na_count <- na_count[order(-na_count$proportion),]
+na_count
+
+na_count <- cbind(Row.Names = rownames(na_count), na_count)
+names(na_count)[1] <- "Column_names"
+
+library(na_count)
+
+naplot <- ggplot(head(na_count,5), aes(Column_names,proportion))
+
+naplot +geom_bar(stat = "identity")
 
 plot(  na_count$Column_names,na_count$proportion,
           type = "h",
@@ -125,7 +227,7 @@ sum(is.na(planning_permission$DevelopmentPostcode))
 #drop any column that has all na vlaues
 planning_permission_clean <- planning_permission[,which(unlist(lapply(planning_permission, function(x) !all(is.na(x)))))]
 
-
+planning_permission_clean < - planning_permission[ which(planning_permission$Year2 >1999 | planning_permission$Year2 < 2020) ,]
 
 cols_to_drop <- c("ApplicationNumber","ETL_DATE", "SiteId", "DevelopmentAddress","DevelopmentDescription","DevelopmentPostcode",
                   "AppealRefNumber","ApplicationNumber", "LandUseCode")
@@ -161,22 +263,38 @@ sum(planning_permission$granted)
 nrow(planning_permission_granted)
 
 #convert the decision date to a character to convert it to the proper time format
-date_field <- as.character(planning_permission_granted$DecisionDate)
+date_field <- as.character(planning_permission$DecisionDate)
 
 #formatng date
 new_date <- as.Date(date_field, "%Y-%d-%m")
 #converting column in dataframe to date
-planning_permission_granted$DecisionDate <- new_date
+planning_permission$DecisionDate <- new_date
 
 #create a year column based on decisiondate
-planning_permission_granted$Year <- format(planning_permission_granted$DecisionDate, "%Y")
+planning_permission$Year <- format(planning_permission$DecisionDate, "%Y")
+
+
+date_field2 <- as.character(planning_permission$ReceivedDate)
+#formatng date
+new_date2 <- as.Date(date_field, "%Y-%d-%m")
+#converting column in dataframe to date
+planning_permission$ReceivedDate <- new_date2
+
+#create a year column based on decisiondate
+planning_permission$Year2 <- format(planning_permission$ReceivedDate, "%Y")
+
+
+
+granted_perm <- planning_permission[which(planning_permission$granted == 1),]
+
+granted_perm <- subset(planning_permission, granted == 1 )
 
 #create a table of year values to plot
-planning_year_freq <- table(planning_permission_granted$Year)
+planning_year_freq <- table(planning_permission$Year2)
 
 #plot frequncy of years
 plot(  planning_year_freq ,  
-        main = "Frequency of Granted planning permission by year", 
+        main = "Frequency of planning  permissions application per year by year", 
        ylab = "Frequency", 
        xlab = "Year",
        col = "blue")
@@ -196,11 +314,11 @@ sum(is.na(planning_permission_granted$DecisionDate))
   
 
 #create a cloumn based on year and month from DecionDate colukmn to match with data in POI2 CPI2 
-planning_permission_granted$year_month <- format(planning_permission_granted$DecisionDate, "%Y-%m")
+planning_permission$year_month <- format(planning_permission$DecisionDate, "%Y-%m")
 
 #Replace - with M to match the "month and year" column in POI2 and CPI2
-planning_permission_granted$year_month <- gsub("-","M",planning_permission_granted$year_month)
-planning_permission_granted$year_month
+planning_permission$year_month <- gsub("-","M",planning_permission$year_month)
+planning_permission$year_month
 
 
 #use macth function to look up the cpi data using month and year columns
@@ -253,6 +371,50 @@ barplot(height = plan_auth_prop,
 #create varaible where CPI is above 100 and below 100
 #check proption of PP granted vs non granted
 #delete columns
+planning_permission<- planning_permission[-c(41:88)]
+
+planning_permission_clean <-   planning_permission[which(planning_permission$Year > 1999 
+                                                         & planning_permission$Year < 2020) , ]
+
+cols_to_drop <- c("ï..OBJECTID","ITMEasting","ITMNorthing","ETL_DATE","LinkAppDetails","OneOffKPI","DevelopmentDescription",
+                  "DevelopmentAddress","DevelopmentPostcode", "ApplicationStatus", "WithdrawnDate","Yearw","ApplicationType","LandUseCode",
+                  "NumResidentialUnits","OneOffHouse","WithdrawnDate","DecisionDueDate","GrantDate","ExpiryDate","AppealRefNumber",
+                  "AppealStatus","AppealDecision", "AppealSubmittedDate", "FIRequestDate","FIRecDate",
+                  "Consumer Price Index (Base Dec 2016=100", "Consumer Price Index (Base Dec 2006=100)",
+                  "Consumer Price Index (Base Dec 2001=100)","Consumer Price Index (Base Nov 1996=100)",
+                  "Percentage Change over 1 month for Consumer Price Index (%)","Percentage Change over 12 months for Consumer Price Index (%)")
+
+
+planning_permission_clean <- planning_permission_clean[,!names(planning_permission) %in% cols_to_drop]
+
+planning_permission_clean <- planning_permission_clean[-c(17:37)]
+
+
+
+planning_permission_clean$year_month <- format(planning_permission_clean$DecisionDate, "%Y-%m")
+
+
+
+
+
+
+
+
+
+planning_permission$year_month <- format(planning_permission$DecisionDate, "%Y-%m")
+
+#Replace - with M to match the "month and year" column in POI2 and CPI2
+planning_permission$year_month <- gsub("-","M",planning_permission$year_month)
+planning_permission$year_month
+
+
+planning_permission <- merge (planning_permission,cpi2, by = "year_month", all =  TRUE)  
+
+planning_permission <- merge (planning_permission,poi2, by = "Year", all =  TRUE)  
+
+planning_permission <- merge (planning_permission,cpi_year, by = "Year", all =  TRUE) 
+
+rm(planning_permission_clean)
 
 
 str(cpi)
