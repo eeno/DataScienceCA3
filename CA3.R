@@ -58,15 +58,10 @@ names(poi2)[1] <- "Year"
 #remove the X from the start of the rownames
 poi2$Year <- substring(poi2$Year, 2)
 
-poi2$Year <- NULL
-
-
-
-cpi_year <- read.csv("CPI by Year2.csv")
 
 
 #planning permission data
-rm(planning_permission)
+
 planning_permission <- read.csv("Planning_Application_Sites_2010_onwards.csv")
 
 #check structure of planning permision
@@ -93,9 +88,6 @@ planning_permission[planning_permission == ""] <- NA
 
 
 
-
-planning_permission 
-
 #check missing value
 library(mice)
 md.pattern(planning_permission)
@@ -104,42 +96,32 @@ library(VIM)
 missing_values <- aggr(planning_permission_clean, prop = FALSE, numbers = TRUE)
 summary(missing_values)
 
-
+#count na' in the data
 na_count <-sapply(planning_permission, function(y) sum(length(which(is.na(y)))))
 #convert to dataframe for easy interpratation
 na_count <- data.frame(na_count)
 #create a new column with percentages of na 
 na_count$proportion <- round((na_count$na_count / nrow(planning_permission) *100),digits = 2)
 
+#create a column of row names
 na_count <- cbind(Row.Names = rownames(na_count), na_count)
 names(na_count)[1] <- "Column_names"
 na_count
-
+#order by proprotion count
 na_count <- na_count[order(-na_count$proportion),]
 
 
-granted_plan <- planning_permission[grepl("GRANT PERMISSION",planning_permission$Decision)
-& planning_permission[is.na(planning_permission$AppealDecision),],]
 
 
-granted_plan <- planning_permission[grepl("GRANT PERMISSION",planning_permission$Decision),]
-
-granted_plan <- granted_plan[is.na(granted_plan$AppealDecision),]
-
-granted_plan <- planning_permission[grepl("GRANT PERMISSION",planning_permission$Decision),]
-
-granted_plan_na <- granted_plan[,is.na(granted_plan$DecisionDate)]
-
-granted_plan_test <- granted_plan[,c("ApplicationNumber","Decision","AppealDecision")]
-
-
+#creating a new colum called granted  based on if decion column contains "GRANT PERMISSION"
+# and the appeal decision colmn contains NA
 planning_permission$granted <- ifelse(grepl("GRANT PERMISSION",planning_permission$Decision) 
                                       & is.na(planning_permission$AppealDecision),1,0)
 
 
 
 
-
+#converting the decions date field
 date_field <- as.character(planning_permission$DecisionDate)
 
 #formatng date
@@ -147,6 +129,7 @@ new_date <- as.Date(date_field, "%Y-%d-%m")
 #converting column in dataframe to date
 planning_permission$DecisionDate <- new_date
 
+#creating a year colum fomr the decions date
 planning_permission$Year <- format(planning_permission$DecisionDate, "%Y")
 
 
@@ -165,16 +148,9 @@ plot(  planning_year_freq ,
 
 summary(planning_permission$DecisionDate)
 
-granted_plan_test <- granted_plan_test[order(-granted_plan_test$ApplicationNumber),]
-
-granted_plan <- granted_plan[!grepl("REFUSE", granted_plan$Decision),]
 
 
-
-
-unique(granted_plan$Decision)
-
-nrow(grante)
+#checking unique values of AppealDecision, Decision,AppealDecision
 
 unique(granted_plan_test$AppealDecision)
 
@@ -184,44 +160,8 @@ unique(planning_permission$AppealDecision)
 
 
 
-test <- data.frame(table(planning_permission$ApplicationNumber))
-
-test <- test[order(-test$Freq),]
-
-test
-
-
-
-na_count <- na_count[order(-na_count$proportion),]
-na_count
-
-na_count <- cbind(Row.Names = rownames(na_count), na_count)
-names(na_count)[1] <- "Column_names"
-
-library(na_count)
-
-naplot <- ggplot(head(na_count,5), aes(Column_names,proportion))
-
-naplot +geom_bar(stat = "identity")
-
-plot(  na_count$Column_names,na_count$proportion,
-          type = "h",
-          main = "Percentage of NA's per column", 
-          ylab = "Percent of NA's", 
-          xlab = "Columns",
-          col = "blue")
-
-
-
-
 #check unique values in planning permission
 unique(planning_permission_granted$Decision)
-
-#over half the postcodes are missing
-sum(is.na(planning_permission$DevelopmentPostcode))
-
-
-
 
 
 #drop any column that has all na vlaues
@@ -242,7 +182,6 @@ authority_count <- table(planning_permission$PlanningAuthority)
 #create a frequncy table
 authority_count <- as.data.frame(authority_freq)
 
-authority_freq
 
 # create a datset based on deciosn and appeal decision. Sometimes permision was granted but then refused
 #due to an appeal
@@ -251,13 +190,6 @@ planning_permission$granted <- ifelse(grepl("GRANT PERMISSION",planning_permissi
 
 
 
-
-
-
-
-
-
-sum(planning_permission$granted)
 
 #count rows in dataframe
 nrow(planning_permission_granted)
@@ -284,11 +216,6 @@ planning_permission$ReceivedDate <- new_date2
 planning_permission$Year2 <- format(planning_permission$ReceivedDate, "%Y")
 
 
-
-granted_perm <- planning_permission[which(planning_permission$granted == 1),]
-
-granted_perm <- subset(planning_permission, granted == 1 )
-
 #create a table of year values to plot
 planning_year_freq <- table(planning_permission$Year2)
 
@@ -304,13 +231,8 @@ planning_permission_granted <- planning_permission_granted[which(planning_permis
                                                           & planning_permission_granted$Year < 2020) , ]
 
 
-library(mice)
-md.pattern(planning_permission)
 
 
-
-#check for na's in decision
-sum(is.na(planning_permission_granted$DecisionDate))
   
 
 #create a cloumn based on year and month from DecionDate colukmn to match with data in POI2 CPI2 
@@ -320,12 +242,6 @@ planning_permission$year_month <- format(planning_permission$DecisionDate, "%Y-%
 planning_permission$year_month <- gsub("-","M",planning_permission$year_month)
 planning_permission$year_month
 
-
-#use macth function to look up the cpi data using month and year columns
-#cpi_check <-cpi2$`Consumer Price Index (Base Dec 2016=100)`[match(planning_permission_granted$month_year, cpi2$`Year and Month number`)]
-
-#add new column to planning permission data set
-#planning_permission_granted$CPI_2016 <- cpi_check
 
 
 
@@ -357,25 +273,14 @@ library(VIM)
 missing_values <- aggr(planning_permission, prop = FALSE, numbers = TRUE)
 summary(missing_values)
 
-plan_auth_prop <- prop.table(table(planning_permission_granted$PlanningAuthority))
 
 
 
-barplot(height = plan_auth_prop,
-        main = "Planning application by authority", 
-        ylab = "Frequency", 
-        xlab = "Authority",
-        col = "white")
-
-#create a varaible where plannig permission was granted 
-#create varaible where CPI is above 100 and below 100
-#check proption of PP granted vs non granted
-#delete columns
-planning_permission<- planning_permission[-c(41:88)]
-
+#create a clean planning permission datframe
 planning_permission_clean <-   planning_permission[which(planning_permission$Year > 1999 
                                                          & planning_permission$Year < 2020) , ]
 
+#list of columns ot drop
 cols_to_drop <- c("ï..OBJECTID","ITMEasting","ITMNorthing","ETL_DATE","LinkAppDetails","OneOffKPI","DevelopmentDescription",
                   "DevelopmentAddress","DevelopmentPostcode", "ApplicationStatus", "WithdrawnDate","Yearw","ApplicationType","LandUseCode",
                   "NumResidentialUnits","OneOffHouse","WithdrawnDate","DecisionDueDate","GrantDate","ExpiryDate","AppealRefNumber",
@@ -384,40 +289,204 @@ cols_to_drop <- c("ï..OBJECTID","ITMEasting","ITMNorthing","ETL_DATE","LinkAppD
                   "Consumer Price Index (Base Dec 2001=100)","Consumer Price Index (Base Nov 1996=100)",
                   "Percentage Change over 1 month for Consumer Price Index (%)","Percentage Change over 12 months for Consumer Price Index (%)")
 
+#dro columns in list
+plan
+ning_permission_clean <- planning_permission_clean[,!names(planning_permission) %in% cols_to_drop]
+#drop extra cpi data and poi data
+planning_permission_clean <- planning_permission_clean[-c(16,19:37,39)]
 
-planning_permission_clean <- planning_permission_clean[,!names(planning_permission) %in% cols_to_drop]
+#rename the remaining CPI and POI data
+new_name <- c("CPI_monthly", "Annual_POI", "CPI_Annual")
 
-planning_permission_clean <- planning_permission_clean[-c(17:37)]
+names(planning_permission_clean)[16:18] <- new_name
 
+#created a second granted column whicjh explicitly indicates if a plannig permision was granted
+planning_permission_clean$granted2 <- ifelse(planning_permission_clean$granted == 1,"Granted","Not Granted")
+#conver to ordered faactor
+planning_permission_clean$granted2 <-  factor(planning_permission_clean$granted2, ordered = TRUE, labels = c("Granted", "Not Granted"))
 
+#conver to numeric
+planning_permission_clean$CPI_monthly <- as.numeric(planning_permission_clean$CPI_monthly)
 
-planning_permission_clean$year_month <- format(planning_permission_clean$DecisionDate, "%Y-%m")
-
-
-
-
-
-
-
-
-
-planning_permission$year_month <- format(planning_permission$DecisionDate, "%Y-%m")
-
-#Replace - with M to match the "month and year" column in POI2 and CPI2
-planning_permission$year_month <- gsub("-","M",planning_permission$year_month)
-planning_permission$year_month
-
-
-planning_permission <- merge (planning_permission,cpi2, by = "year_month", all =  TRUE)  
-
-planning_permission <- merge (planning_permission,poi2, by = "Year", all =  TRUE)  
-
-planning_permission <- merge (planning_permission,cpi_year, by = "Year", all =  TRUE) 
-
-rm(planning_permission_clean)
+#created an indicator colum to explitly label if a CPI value is above the benchmark of 100
+planning_permission_clean$CPI_greater_base <- ifelse(planning_permission_clean$CPI_monthly >= 100 ,"Yes","No")
+#convert to ordered faactor
+planning_permission_clean$CPI_greater_base <- factor(planning_permission_clean$CPI_greater_base, ordered = TRUE,
+                                                     c("Yes","No"))
 
 
-str(cpi)
-str(poi)
-str(planning_permission)
-nrow(planning_permission)
+#check structure
+str(planning_permission_clean$CPI_greater_base)
+#check structure
+str(planning_permission_clean$granted2)
+
+#pca analysis--------------------------------------------------------------------------------
+
+#choose numeric data
+pca_test <- planning_permission_clean[,c(1,12:18)]
+#creat a datframe
+pca_test <- as.data.frame(pca_test)
+#convert to numeric typpe
+pca_test <- sapply(pca_test,as.numeric)
+
+#performing pca analysis
+pca <- prcomp(pca_test,center = TRUE, scale. = TRUE)
+pca
+str(pca)
+summary(pca)
+
+pca$rotation[1:nrow(pca$rotation), 1:3]
+
+
+
+library("factoextra")
+eig_values <- get_eigenvalue(pca)
+eig_values
+
+
+fviz_eig(pca, addlabels = TRUE, ylim = c(0, 50))
+
+
+pca_for_variables <- get_pca_var(pca)
+pca_for_variables
+
+install.packages("corrplot")
+library("corrplot")
+library("FactoMineR")
+library("factoextra")
+
+opar <- par(no.readonly = TRUE)
+par(opar)
+
+corrplot(pca_for_variables$cos2, is.corr = FALSE)
+
+fviz_pca_var(pca, col.var = "black")
+
+head(pca_for_variables$cos2, 10)
+
+fviz_cos2(pca, choice = "var", axes = 1:2)
+
+# Colour by cos2 values: quality on the factor map
+fviz_pca_var(pca, col.var = "cos2",
+             gradient.cols = c("red", "Blue", "Green"), 
+             repel = TRUE) # Avoid text overlapping
+
+
+
+head(pca_for_variables$contrib, 20)
+
+
+
+fviz_pca_var(pca, 
+             axes = c(1, 2),
+             col.var = "contrib",
+             gradient.cols = c("red", "Blue", "Green"),
+)
+
+# Contributions of variables to PC1
+fviz_contrib(pca, choice = "var", axes = 1, top = 8)
+
+# Contributions of variables to PC2
+fviz_contrib(pca, choice = "var", axes = 2, top = 20)
+
+
+# Contribution to PC1 - PC5
+fviz_contrib(pca, choice = "var", axes = 1:5, top = 20)
+
+
+
+fviz_pca_ind(pca,
+             axes = c(3,5), col.var = "contrib",
+             geom.ind = "point", # show points only (but not "text values")
+             col.ind = planning_permission_clean$granted2, # colour by groups
+             palette = c("Red", "Green"),
+             addEllipses = TRUE, # Concentration ellipses
+             legend.title = "granted"
+)
+
+fviz_pca_biplot(pca, 
+                col.ind = planning_permission_clean$granted2, palette = "jco", 
+                addEllipses = TRUE, label = "var",
+                col.var = "black", repel = TRUE,
+                legend.title = "Vote")
+
+
+
+biplot <- fviz_pca_biplot(pca, 
+                          col.ind = planning_permission_clean$granted2,
+                          addEllipses = TRUE, label = "var",
+                          col.var = "black", repel = TRUE
+) 
+
+ggpubr::ggpar(biplot,
+              title = "Principal Component Analysis",
+              subtitle = "Planning permission dataset",
+              caption = "Source: Housing.gov",
+              xlab = "PC 1", ylab = "PC 2",
+              legend.title = "Granted", legend.position = "top",
+              ggtheme = theme_gray(), palette = "jco")
+
+
+
+# statistical test-----------------------------------------------------------------------------------------
+histogram(~CPI_monthly | granted2, data = planning_permission_clean)
+
+with(planning_permission_clean,
+     qqplot(CPI_monthly[granted2 == "Granted"],
+            CPI_monthly[granted2 == "Not Granted"], 
+            main = "Comparing 2 samples", 
+            xlab = "CPI = Granted",
+            ylab =  "CPI = Not Granted"))
+
+
+par(mfrow=c(1,0))
+
+# Using a QQ plot to check for normality
+# qqnorm function plots your sample 
+# against a normal distribution
+with(planning_permission_clean, {
+  qqnorm(CPI_monthly[granted2 == "Not Granted"], 
+         main = "Not granted")
+  qqline(CPI_monthly[granted2 == "Not Granted"])
+})
+
+with(planning_permission_clean, {
+  qqnorm(CPI_monthly[granted2 == "Granted"], 
+         main = "Granted")
+  qqline(CPI_monthly[granted2 == "Granted"])
+})
+ 
+
+
+set.seed(100)
+#sample 5000 random rows from the dataset with no NA's in the location 
+#call ne dataframe random_crime_sample
+random_planning_permission <- planning_permission_clean[sample(1:nrow(planning_permission_clean), 5000),]
+
+
+#check normality
+normaility_test <- shapiro.test(random_planning_permission$CPI_monthly)
+normaility_test$p.value
+
+
+install.packages("pwr")
+library("pwr")
+#run apower test to determin the smaple size needed
+power_test <- pwr.chisq.test(w= 0.6,  df = 1, sig.level = 0.05, p = .9  )
+
+power_test
+
+
+#create table to perform chi squared test
+test_table <- table( planning_permission_clean$granted2 ,planning_permission_clean$CPI_greater_base)
+
+test_table
+
+
+#run chi squared test to determin if null hypothesis is accepted
+chisq.test(test_table)
+
+
+
+
+
