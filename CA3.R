@@ -33,7 +33,7 @@ cpi2 <- cpi2[grepl("20" ,cpi2$year_month),]
 #remove 2020 data
 cpi2 <- cpi2[!grepl("2020" ,cpi2$year_month),]
 
-
+write.csv(cpi2,"CPI2.csv")
 #production output index
 poi <- read.csv("POI_construction_all.csv")
 
@@ -93,7 +93,7 @@ library(mice)
 md.pattern(planning_permission)
 
 library(VIM)
-missing_values <- aggr(planning_permission_clean, prop = FALSE, numbers = TRUE)
+missing_values <- aggr(planning_permission, prop = FALSE, numbers = TRUE)
 summary(missing_values)
 
 #count na' in the data
@@ -152,16 +152,9 @@ summary(planning_permission$DecisionDate)
 
 #checking unique values of AppealDecision, Decision,AppealDecision
 
-unique(granted_plan_test$AppealDecision)
 
 unique(planning_permission$Decision)
 unique(planning_permission$AppealDecision)
-
-
-
-
-#check unique values in planning permission
-unique(planning_permission_granted$Decision)
 
 
 #drop any column that has all na vlaues
@@ -180,7 +173,7 @@ planning_permission_clean <- planning_permission_clean[, !names(planning_permiss
 authority_count <- table(planning_permission$PlanningAuthority)
 
 #create a frequncy table
-authority_count <- as.data.frame(authority_freq)
+authority_count <- as.data.frame(authority_count)
 
 
 # create a datset based on deciosn and appeal decision. Sometimes permision was granted but then refused
@@ -188,17 +181,17 @@ authority_count <- as.data.frame(authority_freq)
 planning_permission$granted <- ifelse(grepl("GRANT PERMISSION",planning_permission$Decision) 
                                       & !grepl("Refuse Permission",planning_permission$AppealDecision),1,0)
 
+str(planning_permission$granted)
 
-
-
+unique(planning_permission$granted)
 #count rows in dataframe
-nrow(planning_permission_granted)
+nrow(planning_permission_clean)
 
 #convert the decision date to a character to convert it to the proper time format
 date_field <- as.character(planning_permission$DecisionDate)
 
 #formatng date
-new_date <- as.Date(date_field, "%Y-%d-%m")
+new_date <- as.Date(date_field, "%Y-%m-%d")
 #converting column in dataframe to date
 planning_permission$DecisionDate <- new_date
 
@@ -208,7 +201,7 @@ planning_permission$Year <- format(planning_permission$DecisionDate, "%Y")
 
 date_field2 <- as.character(planning_permission$ReceivedDate)
 #formatng date
-new_date2 <- as.Date(date_field, "%Y-%d-%m")
+new_date2 <- as.Date(date_field2, "%Y-%m-%d")
 #converting column in dataframe to date
 planning_permission$ReceivedDate <- new_date2
 
@@ -227,8 +220,8 @@ plot(  planning_year_freq ,
        col = "blue")
 
 #Pre 1999 has very litle data as does 2020. include data form 2000 - 2019
-planning_permission_granted <- planning_permission_granted[which(planning_permission_granted$Year > 1999 
-                                                          & planning_permission_granted$Year < 2020) , ]
+planning_permission <- planning_permission[which(planning_permission$Year > 1999 
+                                                          & planning_permission$Year < 2020) , ]
 
 
 
@@ -247,10 +240,10 @@ planning_permission$year_month
 
 #cpi2$`Year and Month number`
  #merge cpi data
-planning_permission_granted <- merge(planning_permission_granted,cpi2, by = "year_month", all =  TRUE)  
+planning_permission <- merge(planning_permission,cpi2, by = "year_month", all =  TRUE)  
 
 #merge poi data
-planning_permission_granted <- merge(planning_permission_granted,poi2, by = "Year", all =  TRUE) 
+planning_permission <- merge(planning_permission,poi2, by = "Year", all =  TRUE) 
 
 
 
@@ -290,15 +283,14 @@ cols_to_drop <- c("ï..OBJECTID","ITMEasting","ITMNorthing","ETL_DATE","LinkAppD
                   "Percentage Change over 1 month for Consumer Price Index (%)","Percentage Change over 12 months for Consumer Price Index (%)")
 
 #dro columns in list
-plan
-ning_permission_clean <- planning_permission_clean[,!names(planning_permission) %in% cols_to_drop]
+planning_permission_clean <- planning_permission_clean[,!names(planning_permission) %in% cols_to_drop]
 #drop extra cpi data and poi data
-planning_permission_clean <- planning_permission_clean[-c(16,19:37,39)]
+planning_permission_clean <- planning_permission_clean[-c(15,17:34,36)]
 
 #rename the remaining CPI and POI data
-new_name <- c("CPI_monthly", "Annual_POI", "CPI_Annual")
+new_name <- c("CPI_monthly", "Annual_POI")
 
-names(planning_permission_clean)[16:18] <- new_name
+names(planning_permission_clean)[15:16] <- new_name
 
 #created a second granted column whicjh explicitly indicates if a plannig permision was granted
 planning_permission_clean$granted2 <- ifelse(planning_permission_clean$granted == 1,"Granted","Not Granted")
@@ -319,6 +311,13 @@ planning_permission_clean$CPI_greater_base <- factor(planning_permission_clean$C
 str(planning_permission_clean$CPI_greater_base)
 #check structure
 str(planning_permission_clean$granted2)
+
+
+
+
+write.csv(planning_permission_clean,"Planning_permission_clean.csv", row.names = FALSE)
+
+
 
 #pca analysis--------------------------------------------------------------------------------
 
@@ -485,7 +484,6 @@ test_table
 
 #run chi squared test to determin if null hypothesis is accepted
 chisq.test(test_table)
-
 
 
 
